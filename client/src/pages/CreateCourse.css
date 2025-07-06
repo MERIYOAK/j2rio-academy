@@ -1,0 +1,525 @@
+.create-course-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.create-course-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.create-course-card h1 {
+  color: #2d3748;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.subtitle {
+  color: #718096;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+/* Upload Progress Styles */
+.upload-progress {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 2px solid #e2e8f0;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progress-header h3 {
+  color: #2d3748;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.progress-percentage {
+  background: #4299e1;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4299e1, #667eea);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-status {
+  color: #4a5568;
+  font-size: 0.9rem;
+  margin: 0;
+  text-align: center;
+}
+
+/* Form Styles */
+.create-course-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group label {
+  color: #2d3748;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+  border-color: #e53e3e;
+}
+
+.error-message {
+  color: #e53e3e;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* File Upload Styles */
+.file-upload {
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #f7fafc;
+  position: relative;
+  cursor: pointer;
+}
+
+.file-upload:hover {
+  border-color: #4299e1;
+  background: #ebf8ff;
+}
+
+.file-upload input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.file-upload-info {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.file-upload-info p {
+  margin: 0.25rem 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.selected-file {
+  color: #4299e1 !important;
+  font-weight: 600;
+  margin-top: 0.5rem !important;
+}
+
+/* Button Styles */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  min-width: 120px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4299e1, #667eea);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(66, 153, 225, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Success Message Styles */
+.success-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.success-message h2 {
+  color: #2d3748;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.success-message p {
+  color: #4a5568;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .create-course-container {
+    padding: 1rem;
+  }
+  
+  .create-course-card {
+    padding: 1.5rem;
+  }
+  
+  .create-course-card h1 {
+    font-size: 2rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-course-card {
+    padding: 1rem;
+  }
+  
+  .create-course-card h1 {
+    font-size: 1.75rem;
+  }
+  
+  .upload-progress {
+    padding: 1rem;
+  }
+  
+  .progress-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
+/* Upload Loading Styles */
+.upload-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.upload-loading {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.5s ease-out;
+  border: 2px solid #4299e1;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.loading-spinner {
+  margin-bottom: 2rem;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #4299e1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(66, 153, 225, 0.3);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-content h3 {
+  color: #2d3748;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.loading-message {
+  color: #4a5568;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.loading-note {
+  color: #718096;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0;
+  padding: 0.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 3px solid #4299e1;
+}
+
+/* Disable form during upload */
+.create-course-form.uploading {
+  pointer-events: none;
+  opacity: 0.6;
+  filter: blur(1px);
+}
+
+/* Disable all interactions during upload */
+body.uploading {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body.uploading * {
+  pointer-events: none !important;
+}
+
+/* Upload Progress Styles - Keep for backward compatibility */
+.upload-progress {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 2px solid #e2e8f0;
+}
+
+/* Edit Type Indicators */
+.edit-type-indicator {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.edit-type-indicator.restricted .restricted-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-type-indicator.partial .partial-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-type-indicator.full .full-edit {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Disabled and Warning Messages */
+.disabled-message {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.warning-message {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.current-file {
+  background-color: #e9ecef;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 5px;
+  font-family: monospace;
+}
+
+/* Disabled file inputs */
+input[type="file"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input[type="file"]:disabled + .disabled-message {
+  opacity: 1;
+}
+
+/* Course title in header */
+.course-title {
+  font-size: 18px;
+  color: #666;
+  margin: 10px 0;
+  font-weight: 500;
+} 

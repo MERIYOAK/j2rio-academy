@@ -1,0 +1,162 @@
+.course-detail-page {
+  padding: 2rem 0;
+}
+
+.course-detail-page h1 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.course-detail-page > p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.course-meta {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.course-meta span {
+  color: #555;
+  font-weight: 500;
+}
+
+.video-section {
+  margin-bottom: 3rem;
+}
+
+.video-section h2 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.video-section video {
+  width: 100%;
+  max-width: 800px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.reviews-section {
+  margin-top: 3rem;
+}
+
+.reviews-section h2 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.average-rating {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.review-item {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.review-author {
+  font-weight: 600;
+  color: #333;
+}
+
+.review-rating {
+  color: #ffc107;
+  font-size: 1.1rem;
+}
+
+.review-text {
+  color: #555;
+  line-height: 1.6;
+}
+
+.review-form {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.review-form h3 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.review-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.review-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.review-form select,
+.review-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.review-form select:focus,
+.review-form textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.review-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .course-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .review-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+} 
