@@ -33,18 +33,29 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, loading } = useAuth();
   
+  console.log('🔒 ProtectedRoute check:');
+  console.log('   User:', user ? { id: user._id, role: user.role, name: user.name } : 'Not logged in');
+  console.log('   Loading:', loading);
+  console.log('   Allowed roles:', allowedRoles);
+  
   if (loading) {
+    console.log('⏳ Route protection: Loading state, showing spinner');
     return <div className="loading"><div className="spinner"></div></div>;
   }
   
   if (!user) {
+    console.log('❌ Route protection: No user, redirecting to home');
     return <Navigate to="/" replace />;
   }
   
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    console.log('❌ Route protection: User role not allowed, redirecting to dashboard');
+    console.log('   User role:', user.role);
+    console.log('   Required roles:', allowedRoles);
     return <Navigate to="/dashboard" replace />;
   }
   
+  console.log('✅ Route protection: Access granted');
   return children;
 };
 
@@ -55,15 +66,24 @@ const AppContent = () => {
     localStorage.getItem('language') || 'en'
   );
 
+  console.log('🌍 App initialized with language:', currentLanguage);
+
   // Handle language change
   const changeLanguage = (language) => {
+    console.log('🌍 Language change requested:', language);
+    console.log('   Previous language:', currentLanguage);
+    console.log('   New language:', language);
+    
     i18n.changeLanguage(language);
     localStorage.setItem('language', language);
     setCurrentLanguage(language);
+    
+    console.log('✅ Language changed successfully');
   };
 
   // Set initial language
   useEffect(() => {
+    console.log('🌍 Setting initial language:', currentLanguage);
     i18n.changeLanguage(currentLanguage);
   }, [currentLanguage, i18n]);
 
@@ -86,11 +106,7 @@ const AppContent = () => {
             {/* Payment routes - must come before course detail route */}
             <Route 
               path="/course/:courseId/payment" 
-              element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <PaymentPage />
-                </ProtectedRoute>
-              } 
+              element={<PaymentPage />}
             />
             
             {/* Course detail route */}

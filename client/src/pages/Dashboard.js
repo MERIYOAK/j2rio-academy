@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { getMyCourses, getInstructorStats, getSecureProfileImageUrl, getSecureThumbnailUrl, updateCourseStatus } from '../utils/api';
+import { getMyCourses, getInstructorStats, getSecureProfileImageUrl, getPublicThumbnailUrl, updateCourseStatus } from '../utils/api';
 import { Link, useNavigate } from 'react-router-dom';
 import CoursePlayer from '../components/CoursePlayer';
 import './Dashboard.css';
@@ -61,20 +61,27 @@ const Dashboard = () => {
         console.log('📡 Fetching instructor courses...');
         const res = await getMyCourses('instructor');
         console.log('📥 Instructor courses response:', res); // Debug log
-        console.log('📥 Instructor courses:', res.courses); // Debug log
-        if (res.courses && res.courses.length > 0) {
-          console.log('🔍 First course details:', {
-            id: res.courses[0]._id,
-            title: res.courses[0].title,
-            thumbnail: res.courses[0].thumbnail,
-            videoUrl: res.courses[0].videoUrl,
-            hasThumbnail: !!res.courses[0].thumbnail,
-            hasVideo: !!res.courses[0].videoUrl,
-            status: res.courses[0].status,
-            isPublished: res.courses[0].isPublished
-          });
+        
+        if (res.success) {
+          console.log('📥 Instructor courses:', res.courses); // Debug log
+          if (res.courses && res.courses.length > 0) {
+            console.log('🔍 First course details:', {
+              id: res.courses[0]._id,
+              title: res.courses[0].title,
+              thumbnail: res.courses[0].thumbnail,
+              videoUrl: res.courses[0].videoUrl,
+              hasThumbnail: !!res.courses[0].thumbnail,
+              hasVideo: !!res.courses[0].videoUrl,
+              status: res.courses[0].status,
+              isPublished: res.courses[0].isPublished
+            });
+          }
+          setCourses(res.courses || []);
+        } else {
+          console.error('❌ Failed to fetch instructor courses:', res.error);
+          setCourses([]);
         }
-        setCourses(res.courses || []);
+        
         console.log('📡 Fetching instructor stats...');
         const statsRes = await getInstructorStats();
         console.log('📥 Instructor stats response:', statsRes);
@@ -83,23 +90,29 @@ const Dashboard = () => {
         console.log('📡 Fetching student enrollments...');
         const res = await getMyCourses('student');
         console.log('📥 Student enrollments response:', res); // Debug log
-        console.log('📥 Student enrollments:', res.courses); // Debug log
-        // For students, courses are nested in enrollment objects
-        const studentCourses = res.courses ? res.courses.map(enrollment => enrollment.courseId) : [];
-        console.log('📥 Student courses extracted:', studentCourses); // Debug log
-        if (studentCourses.length > 0) {
-          console.log('🔍 First student course details:', {
-            id: studentCourses[0]._id,
-            title: studentCourses[0].title,
-            thumbnail: studentCourses[0].thumbnail,
-            videoUrl: studentCourses[0].videoUrl,
-            hasThumbnail: !!studentCourses[0].thumbnail,
-            hasVideo: !!studentCourses[0].videoUrl,
-            status: studentCourses[0].status,
-            isPublished: studentCourses[0].isPublished
-          });
+        
+        if (res.success) {
+          console.log('📥 Student enrollments:', res.courses); // Debug log
+          // For students, courses are nested in enrollment objects
+          const studentCourses = res.courses ? res.courses.map(enrollment => enrollment.courseId) : [];
+          console.log('📥 Student courses extracted:', studentCourses); // Debug log
+          if (studentCourses.length > 0) {
+            console.log('🔍 First student course details:', {
+              id: studentCourses[0]._id,
+              title: studentCourses[0].title,
+              thumbnail: studentCourses[0].thumbnail,
+              videoUrl: studentCourses[0].videoUrl,
+              hasThumbnail: !!studentCourses[0].thumbnail,
+              hasVideo: !!studentCourses[0].videoUrl,
+              status: studentCourses[0].status,
+              isPublished: studentCourses[0].isPublished
+            });
+          }
+          setCourses(studentCourses);
+        } else {
+          console.error('❌ Failed to fetch student enrollments:', res.error);
+          setCourses([]);
         }
-        setCourses(studentCourses);
       }
       setLoading(false);
     };
@@ -114,7 +127,7 @@ const Dashboard = () => {
         for (const course of courses) {
           if (course.thumbnail) {
             try {
-              const result = await getSecureThumbnailUrl(course._id);
+              const result = await getPublicThumbnailUrl(course._id);
               if (result.success) {
                 thumbnailUrlMap[course._id] = result.url;
               }
@@ -134,12 +147,18 @@ const Dashboard = () => {
     const loadProfileImage = async () => {
       if (user && user.profilePicture) {
         try {
+          console.log('🖼️ Loading profile image for user:', user._id);
           const result = await getSecureProfileImageUrl(user._id);
           if (result.success) {
+            console.log('✅ Profile image loaded successfully');
             setProfileImageUrl(result.url);
+          } else {
+            console.warn('⚠️ Failed to load profile image:', result.error);
+            setProfileImageUrl('');
           }
         } catch (error) {
-          console.error('Failed to load profile image:', error);
+          console.warn('⚠️ Profile image loading error:', error.message);
+          setProfileImageUrl('');
         }
       }
     };
@@ -543,30 +562,35 @@ const Dashboard = () => {
         console.log('📡 Fetching updated courses...');
         const res = await getMyCourses('instructor');
         console.log('📥 Updated courses received:', res);
-        console.log('📥 Updated courses array:', res.courses);
         
-        if (res.courses && res.courses.length > 0) {
-          console.log('🔍 Updated course details:', res.courses.map(course => ({
-            id: course._id,
-            title: course.title,
-            status: course.status,
-            isPublished: course.isPublished,
-            enrollmentCount: course.enrollmentCount,
-            hasVideo: !!course.videoUrl,
-            hasThumbnail: !!course.thumbnail
-          })));
+        if (res.success) {
+          console.log('📥 Updated courses array:', res.courses);
+          
+          if (res.courses && res.courses.length > 0) {
+            console.log('🔍 Updated course details:', res.courses.map(course => ({
+              id: course._id,
+              title: course.title,
+              status: course.status,
+              isPublished: course.isPublished,
+              enrollmentCount: course.enrollmentCount,
+              hasVideo: !!course.videoUrl,
+              hasThumbnail: !!course.thumbnail
+            })));
+          }
+          
+          setCourses(res.courses || []);
+          
+          // Refresh stats
+          console.log('📡 Fetching updated stats...');
+          const statsRes = await getInstructorStats();
+          console.log('📥 Updated stats received:', statsRes);
+          setStats(statsRes.stats || null);
+          
+          console.log('✅ Course and stats refreshed successfully');
+          alert(`Course ${newStatus}d successfully!`);
+        } else {
+          console.error('❌ Failed to refresh courses after status update:', res.error);
         }
-        
-        setCourses(res.courses || []);
-        
-        // Refresh stats
-        console.log('📡 Fetching updated stats...');
-        const statsRes = await getInstructorStats();
-        console.log('📥 Updated stats received:', statsRes);
-        setStats(statsRes.stats || null);
-        
-        console.log('✅ Course and stats refreshed successfully');
-        alert(`Course ${newStatus}d successfully!`);
       } else {
         console.error('❌ Status update failed:', result.error);
         alert(`Failed to ${newStatus} course: ${result.error}`);

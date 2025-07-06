@@ -142,6 +142,7 @@ export const coursesAPI = {
     if (role === 'instructor') {
       return api.get('/courses/instructor/my-courses');
     } else {
+      // For both students and instructors, use the same endpoint for enrolled courses
       return api.get('/courses/student/enrolled');
     }
   },
@@ -180,7 +181,6 @@ export const paymentAPI = {
 // Video API
 export const videoAPI = {
   getSecureVideoUrl: (courseId) => api.get(`/video/${courseId}`),
-  getSecureThumbnailUrl: (courseId) => api.get(`/video/thumbnail/${courseId}`),
   getPublicThumbnailUrl: (courseId) => api.get(`/video/thumbnail/public/${courseId}`),
   getSecureProfileImageUrl: (userId) => api.get(`/video/profile/${userId}`),
 };
@@ -197,45 +197,22 @@ export const getCourses = async (params = {}) => {
     
     console.log('✅ API call successful');
     console.log('📊 Response status:', response.status);
-    console.log('📊 Response data:', response.data);
-    console.log('📊 Courses count:', response.data.courses?.length || 0);
+    console.log('📊 Number of courses returned:', response.data.courses?.length || 0);
+    console.log('📊 Total courses count:', response.data.total || 0);
     
-    if (response.data.courses && response.data.courses.length > 0) {
-      console.log('📋 First course sample:', {
-        id: response.data.courses[0]._id,
-        title: response.data.courses[0].title,
-        instructor: response.data.courses[0].instructor?.name,
-        price: response.data.courses[0].price,
-        hasThumbnail: !!response.data.courses[0].thumbnail,
-        hasVideo: !!response.data.courses[0].videoUrl
-      });
-    }
-    
-    return { success: true, courses: response.data.courses };
+    // Return the expected structure with success property
+    return { 
+      success: true, 
+      courses: response.data.courses || [],
+      total: response.data.total || 0
+    };
   } catch (error) {
-    console.error('❌ getCourses API call failed');
-    console.error('❌ Error details:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      }
-    });
+    console.log('❌ getCourses API call failed:');
+    console.log('   Error status:', error.response?.status);
+    console.log('   Error message:', error.response?.data?.message || error.message);
+    console.log('   Error details:', error.response?.data);
     
-    // Check if it's an authentication error
-    if (error.response?.status === 401) {
-      console.warn('⚠️ 401 Unauthorized - This might be expected for unauthenticated users');
-    }
-    
-    // Check if it's a network error
-    if (!error.response) {
-      console.error('🌐 Network error - Check if backend server is running');
-    }
-    
+    // Return error structure
     return { 
       success: false, 
       error: error.response?.data?.message || 'Failed to fetch courses',
@@ -246,24 +223,63 @@ export const getCourses = async (params = {}) => {
 };
 
 export const getCourseDetail = async (id) => {
+  console.log('🔍 getCourseDetail called for course ID:', id);
+  
   try {
+    console.log('📡 Making API call to /courses/' + id);
     const response = await coursesAPI.getById(id);
+    
+    console.log('✅ Course detail API call successful');
+    console.log('📊 Course title:', response.data.course?.title);
+    console.log('📊 Course instructor:', response.data.course?.instructor?.name);
+    console.log('📊 User enrolled:', response.data.enrolled);
+    
     return { 
       success: true, 
       course: response.data.course,
-      enrolled: response.data.enrolled 
+      enrolled: response.data.enrolled
     };
   } catch (error) {
-    return { success: false, error: error.response?.data?.message || 'Failed to fetch course' };
+    console.log('❌ getCourseDetail API call failed:');
+    console.log('   Course ID:', id);
+    console.log('   Error status:', error.response?.status);
+    console.log('   Error message:', error.response?.data?.message || error.message);
+    
+    return { 
+      success: false, 
+      error: error.response?.data?.message || 'Failed to fetch course details',
+      status: error.response?.status,
+      details: error.message
+    };
   }
 };
 
 export const getMyCourses = async (role) => {
+  console.log('🔍 getMyCourses called for role:', role);
+  
   try {
+    console.log('📡 Making API call to get courses for role:', role);
     const response = await coursesAPI.getMyCourses(role);
-    return { success: true, courses: response.data.courses };
+    
+    console.log('✅ getMyCourses API call successful');
+    console.log('📊 Number of courses returned:', response.data.courses?.length || 0);
+    
+    return { 
+      success: true, 
+      courses: response.data.courses || []
+    };
   } catch (error) {
-    return { success: false, error: error.response?.data?.message || 'Failed to fetch courses' };
+    console.log('❌ getMyCourses API call failed:');
+    console.log('   Role:', role);
+    console.log('   Error status:', error.response?.status);
+    console.log('   Error message:', error.response?.data?.message || error.message);
+    
+    return { 
+      success: false, 
+      error: error.response?.data?.message || 'Failed to fetch courses',
+      status: error.response?.status,
+      details: error.message
+    };
   }
 };
 
@@ -277,20 +293,61 @@ export const getInstructorStats = async () => {
 };
 
 export const enrollInCourse = async (courseId) => {
+  console.log('🔍 enrollInCourse called for course ID:', courseId);
+  
   try {
+    console.log('📡 Making API call to enroll in course');
     const response = await coursesAPI.enrollInCourse(courseId);
-    return { success: true, data: response.data };
+    
+    console.log('✅ Enrollment API call successful');
+    console.log('📊 Enrollment result:', response.data);
+    
+    return { 
+      success: true, 
+      data: response.data
+    };
   } catch (error) {
-    return { success: false, error: error.response?.data?.message || 'Failed to enroll' };
+    console.log('❌ enrollInCourse API call failed:');
+    console.log('   Course ID:', courseId);
+    console.log('   Error status:', error.response?.status);
+    console.log('   Error message:', error.response?.data?.message || error.message);
+    
+    return { 
+      success: false, 
+      error: error.response?.data?.message || 'Failed to enroll in course',
+      status: error.response?.status,
+      details: error.message
+    };
   }
 };
 
 export const postReview = async (courseId, reviewData) => {
+  console.log('🔍 postReview called for course ID:', courseId);
+  console.log('📝 Review data:', reviewData);
+  
   try {
+    console.log('📡 Making API call to post review');
     const response = await coursesAPI.postReview(courseId, reviewData);
-    return { success: true, data: response.data };
+    
+    console.log('✅ Review posting API call successful');
+    console.log('📊 Review result:', response.data);
+    
+    return { 
+      success: true, 
+      data: response.data
+    };
   } catch (error) {
-    return { success: false, error: error.response?.data?.message || 'Failed to post review' };
+    console.log('❌ postReview API call failed:');
+    console.log('   Course ID:', courseId);
+    console.log('   Error status:', error.response?.status);
+    console.log('   Error message:', error.response?.data?.message || error.message);
+    
+    return { 
+      success: false, 
+      error: error.response?.data?.message || 'Failed to post review',
+      status: error.response?.status,
+      details: error.message
+    };
   }
 };
 
@@ -334,50 +391,7 @@ export const getSecureVideoUrl = async (courseId) => {
   }
 };
 
-// Helper function for secure thumbnail access
-export const getSecureThumbnailUrl = async (courseId) => {
-  console.log('🖼️  getSecureThumbnailUrl called for courseId:', courseId);
-  console.log('🔍 Current user token:', localStorage.getItem('token') ? 'Present' : 'Not present');
-  
-  try {
-    console.log('📡 Making API call to /video/thumbnail/' + courseId);
-    const response = await videoAPI.getSecureThumbnailUrl(courseId);
-    
-    console.log('✅ Thumbnail URL API call successful');
-    console.log('📊 Response status:', response.status);
-    console.log('📊 Response data:', response.data);
-    
-    return { success: true, url: response.data.url, type: response.data.type };
-  } catch (error) {
-    console.error('❌ getSecureThumbnailUrl API call failed');
-    console.error('❌ Error details:', {
-      courseId,
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      }
-    });
-    
-    // Check if it's an authentication error
-    if (error.response?.status === 401) {
-      console.warn('⚠️  401 Unauthorized for thumbnail - This might be expected for unauthenticated users');
-    }
-    
-    return { 
-      success: false, 
-      error: error.response?.data?.message || 'Failed to get secure thumbnail URL',
-      status: error.response?.status,
-      details: error.message
-    };
-  }
-};
-
-// Helper function for public thumbnail access (no authentication required)
+// Helper function for thumbnail access (no authentication required)
 export const getPublicThumbnailUrl = async (courseId) => {
   console.log('🖼️  getPublicThumbnailUrl called for courseId:', courseId);
   console.log('🔍 Current user token:', localStorage.getItem('token') ? 'Present' : 'Not present');

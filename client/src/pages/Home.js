@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { getCourses, getSecureThumbnailUrl, getPublicThumbnailUrl } from '../utils/api';
+import { getCourses, getPublicThumbnailUrl } from '../utils/api';
 import './Home.css';
 import { scrollToTop } from '../utils/scrollUtils';
 
@@ -46,10 +46,8 @@ const Home = () => {
             try {
               console.log('🏠 Home page: Loading thumbnail for course:', course._id);
               
-              // Use public endpoint for unauthenticated users, secure endpoint for authenticated users
-              const result = user 
-                ? await getSecureThumbnailUrl(course._id)
-                : await getPublicThumbnailUrl(course._id);
+              // Use public endpoint for all users (thumbnails are public content)
+              const result = await getPublicThumbnailUrl(course._id);
               
               if (result.success) {
                 thumbnailUrlMap[course._id] = result.url;
@@ -183,6 +181,10 @@ const Home = () => {
                       ) : course.isEnrolled ? (
                         <div className="course-action enrolled">
                           <span className="action-text">Continue Learning</span>
+                        </div>
+                      ) : user.role === 'instructor' && course.instructorId?.toString() === user._id?.toString() ? (
+                        <div className="course-action">
+                          <span className="action-text">Your Course</span>
                         </div>
                       ) : (
                         <div className="course-action">

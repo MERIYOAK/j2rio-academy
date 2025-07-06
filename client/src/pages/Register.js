@@ -29,6 +29,11 @@ const Register = () => {
   const redirectTo = location.state?.redirectTo || '/dashboard';
   const message = location.state?.message;
 
+  console.log('📝 Register page: Component initialized');
+  console.log('📝 Register page: Redirect to:', redirectTo);
+  console.log('📝 Register page: Message:', message);
+  console.log('📝 Register page: Location state:', location.state);
+
   // Ensure page scrolls to top when component mounts
   useEffect(() => {
     console.log('📝 Register page: Scrolling to top');
@@ -121,21 +126,31 @@ const Register = () => {
     e.preventDefault();
     setSubmitError('');
     
+    console.log('📝 Register: Form submission started');
+    console.log('📝 Register: Redirect to:', redirectTo);
+    
     if (!validateForm()) {
+      console.log('📝 Register: Form validation failed');
       return;
     }
 
     setLoading(true);
     
     try {
+      console.log('📝 Register: Calling register function...');
       const result = await register(formData, profileImage);
+      console.log('📝 Register: Register result:', result);
+      
       if (result.success) {
+        console.log('📝 Register: Registration successful, navigating to:', redirectTo);
         // Navigate to the redirect URL or dashboard
         navigate(redirectTo);
       } else {
+        console.log('📝 Register: Registration failed:', result.error);
         setSubmitError(result.error);
       }
     } catch (error) {
+      console.log('📝 Register: Registration error:', error);
       setSubmitError(t('networkError'));
     } finally {
       setLoading(false);
@@ -300,4 +315,4 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default Register;

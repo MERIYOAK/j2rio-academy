@@ -147,15 +147,8 @@ const Header = ({ currentLanguage, onLanguageChange }) => {
               <div className="auth-section">
                 <div className="user-menu">
                   <div 
-                    className="user-profile" 
+                    className={`user-profile ${showDropdown ? 'active' : 'inactive'}`}
                     onClick={toggleDropdown}
-                    style={{
-                      borderColor: showDropdown ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.2)',
-                      backgroundColor: showDropdown ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)',
-                      border: showDropdown ? '3px solid red' : '2px solid rgba(255, 255, 255, 0.2)',
-                      transform: showDropdown ? 'scale(1.05)' : 'scale(1)',
-                      transition: 'all 0.3s ease'
-                    }}
                   >
                     {imageLoading ? (
                       <div className="profile-placeholder loading">
@@ -167,8 +160,7 @@ const Header = ({ currentLanguage, onLanguageChange }) => {
                         alt={user?.name} 
                         className="profile-image"
                         onError={(e) => {
-                          console.error('Profile image failed to load:', profileImageUrl);
-                          console.error('Image error details:', e);
+                          console.warn('Profile image failed to load, using placeholder:', profileImageUrl);
                           setProfileImageUrl('');
                           // Force re-render to show placeholder
                           setTimeout(() => {
@@ -176,7 +168,8 @@ const Header = ({ currentLanguage, onLanguageChange }) => {
                           }, 100);
                         }}
                         onLoad={() => {
-                          console.log('Profile image loaded successfully:', profileImageUrl);
+                          console.log('Profile image loaded successfully');
+                          setImageLoading(false);
                         }}
                       />
                     ) : (
@@ -185,16 +178,6 @@ const Header = ({ currentLanguage, onLanguageChange }) => {
                       </div>
                     )}
                     <span className="user-name">{user?.name}</span>
-                    {/* Debug indicator 
-                    <span style={{ 
-                      fontSize: '10px', 
-                      color: 'yellow', 
-                      marginLeft: '4px',
-                      display: showDropdown ? 'inline' : 'none'
-                    }}>
-                      [ACTIVE]
-                    </span>
-                    */}
                   </div>
                 </div>
               </div>
@@ -221,52 +204,13 @@ const Header = ({ currentLanguage, onLanguageChange }) => {
       
       {/* Modal-style Dropdown - Fixed Position */}
       {showDropdown && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: '80px',
-            right: '20px',
-            background: 'white',
-            border: '2px solid #007bff',
-            borderRadius: '8px',
-            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)',
-            minWidth: '200px',
-            zIndex: 10000,
-            padding: '12px 0',
-            display: 'block',
-            animation: 'slideIn 0.3s ease'
-          }}
-        >
-          <div style={{
-            position: 'absolute',
-            top: '-8px',
-            right: '20px',
-            width: '0',
-            height: '0',
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderBottom: '8px solid #007bff'
-          }}></div>
+        <div className="modal-dropdown">
+
           
           <Link 
             to="/dashboard" 
             onClick={closeDropdown}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '12px 20px',
-              textAlign: 'left',
-              background: 'none',
-              border: 'none',
-              color: '#333',
-              fontSize: '14px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              borderBottom: '1px solid #f0f0f0',
-              transition: 'background-color 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            className="modal-dropdown-item"
           >
             📊 {t('dashboard')}
           </Link>
@@ -274,43 +218,14 @@ const Header = ({ currentLanguage, onLanguageChange }) => {
           <Link 
             to="/profile" 
             onClick={closeDropdown}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '12px 20px',
-              textAlign: 'left',
-              background: 'none',
-              border: 'none',
-              color: '#333',
-              fontSize: '14px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              borderBottom: '1px solid #f0f0f0',
-              transition: 'background-color 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            className="modal-dropdown-item"
           >
             👤 {t('profile')}
           </Link>
           
           <button 
             onClick={handleLogout}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '12px 20px',
-              textAlign: 'left',
-              background: 'none',
-              border: 'none',
-              color: '#dc3545',
-              fontSize: '14px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              transition: 'background-color 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            className="modal-dropdown-item logout"
           >
             🚪 {t('logout')}
           </button>
@@ -320,16 +235,8 @@ const Header = ({ currentLanguage, onLanguageChange }) => {
       {/* Backdrop to close dropdown */}
       {showDropdown && (
         <div 
+          className="modal-dropdown-backdrop"
           onClick={closeDropdown}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.1)',
-            zIndex: 9999
-          }}
         ></div>
       )}
     </header>

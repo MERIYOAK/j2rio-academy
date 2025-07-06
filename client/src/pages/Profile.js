@@ -38,12 +38,18 @@ const Profile = () => {
 
   const loadProfileImage = async (userId) => {
     try {
+      console.log('🖼️ Loading profile image for user:', userId);
       const result = await getSecureProfileImageUrl(userId);
       if (result.success) {
+        console.log('✅ Profile image loaded successfully');
         setCurrentProfileImage(result.url);
+      } else {
+        console.warn('⚠️ Failed to load profile image:', result.error);
+        setCurrentProfileImage('');
       }
     } catch (error) {
-      console.error('Failed to load profile image:', error);
+      console.warn('⚠️ Profile image loading error:', error.message);
+      setCurrentProfileImage('');
     }
   };
 

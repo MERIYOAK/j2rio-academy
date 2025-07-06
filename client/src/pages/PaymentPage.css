@@ -49,6 +49,21 @@
   margin: 0;
 }
 
+.instructor-notice {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+  border-radius: 8px;
+  border: 1px solid #90cdf4;
+}
+
+.instructor-notice p {
+  color: #2b6cb0;
+  font-size: 0.95rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
 .payment-content {
   margin-bottom: 2rem;
 }
@@ -183,6 +198,49 @@
   background: #f8f9fa;
   border-radius: 12px;
   padding: 2rem;
+  border: 1px solid #e2e8f0;
+}
+
+/* Temporary Code Section */
+.temp-code-section {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.temp-code-info {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
+  border-radius: 8px;
+  border: 1px solid #f6ad55;
+}
+
+.temp-code-info h3 {
+  color: #c05621;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.temp-code-info p {
+  color: #744210;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.temp-code-note {
+  background: #c05621;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.temp-code-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
 

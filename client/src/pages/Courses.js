@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getCourses, getSecureThumbnailUrl, getPublicThumbnailUrl } from '../utils/api';
+import { getCourses, getPublicThumbnailUrl } from '../utils/api';
 import './Courses.css';
 import { scrollToTop } from '../utils/scrollUtils';
 
@@ -110,10 +110,8 @@ const Courses = () => {
           if (course.thumbnail) {
             console.log('🖼️  Loading thumbnail for course:', course._id, course.title);
             try {
-              // Use public endpoint for unauthenticated users, secure endpoint for authenticated users
-              const result = user 
-                ? await getSecureThumbnailUrl(course._id)
-                : await getPublicThumbnailUrl(course._id);
+              // Use public endpoint for all users (thumbnails are public content)
+              const result = await getPublicThumbnailUrl(course._id);
               
               console.log('🖼️  Thumbnail result for', course._id, ':', result);
               
@@ -138,25 +136,43 @@ const Courses = () => {
   }, [courses, user]);
 
   const handleCourseClick = (course) => {
+    console.log('🎯 Courses: Course clicked:', {
+      courseId: course._id,
+      courseTitle: course.title,
+      user: user ? { id: user._id, role: user.role } : 'No user',
+      isEnrolled: course.isEnrolled,
+      isInstructor: user?.role === 'instructor' && course.instructorId?.toString() === user._id?.toString()
+    });
+
     // If user is not logged in, redirect to register
     if (!user) {
+      console.log('👤 Courses: No user, redirecting to register');
       navigate('/register', { 
         state: { 
           message: 'Please register to access course details',
-          redirectTo: `/courses/${course._id}`
+          redirectTo: `/course/${course._id}`
         }
       });
       return;
     }
 
-    // If user is logged in but not enrolled, redirect to course detail for enrollment
-    if (user && !course.isEnrolled) {
-      navigate(`/courses/${course._id}`);
+    // If user is enrolled, go to course detail
+    if (course.isEnrolled) {
+      console.log('✅ Courses: User enrolled, going to course detail');
+      navigate(`/course/${course._id}`);
       return;
     }
 
-    // If user is enrolled, go to course detail
-    navigate(`/courses/${course._id}`);
+    // If user is the instructor of this course, go to course detail
+    if (user.role === 'instructor' && course.instructorId?.toString() === user._id?.toString()) {
+      console.log('👨‍🏫 Courses: User is instructor, going to course detail');
+      navigate(`/course/${course._id}`);
+      return;
+    }
+
+    // If user is logged in but not enrolled, redirect directly to payment page
+    console.log('💳 Courses: User not enrolled, redirecting to payment page');
+    navigate(`/course/${course._id}/payment`);
   };
 
   const clearFilters = () => {
@@ -272,9 +288,13 @@ const Courses = () => {
                         <div className="course-action enrolled">
                           <span className="action-text">{t('continueLearning')}</span>
                         </div>
+                      ) : user.role === 'instructor' && course.instructorId?.toString() === user._id?.toString() ? (
+                        <div className="course-action">
+                          <span className="action-text">Your Course</span>
+                        </div>
                       ) : (
                         <div className="course-action">
-                          <span className="action-text">{t('enrollNow')}</span>
+                          <span className="action-text" >{t('enrollNow')}</span>
                         </div>
                       )}
                     </div>

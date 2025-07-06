@@ -14,9 +14,10 @@ const PaymentPage = () => {
   
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('temp'); // Changed default to temp
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentStep, setPaymentStep] = useState('details'); // 'details', 'processing', 'success', 'failed'
+  const [tempCode, setTempCode] = useState(''); // For temporary enrollment
   const [formData, setFormData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -26,9 +27,40 @@ const PaymentPage = () => {
   });
   const [errors, setErrors] = useState({});
 
+  // Check authentication first
+  useEffect(() => {
+    console.log('🔐 PaymentPage: Authentication check started');
+    console.log('🔐 PaymentPage: Current user:', user ? { id: user._id, role: user.role, name: user.name } : 'No user');
+    console.log('🔐 PaymentPage: Course ID:', courseId);
+    
+    if (!user) {
+      console.log('🔐 PaymentPage: No user, redirecting to register');
+      console.log('🔐 PaymentPage: Redirect URL will be:', `/course/${courseId}/payment`);
+      navigate('/register', { 
+        state: { 
+          message: 'Please register to enroll in this course',
+          redirectTo: `/course/${courseId}/payment`
+        }
+      });
+      return;
+    }
+
+    // Allow both students and instructors to enroll
+    if (user.role !== 'student' && user.role !== 'instructor') {
+      console.log('❌ PaymentPage: User has invalid role for enrollment:', user.role);
+      alert('Only students and instructors can enroll in courses.');
+      navigate('/dashboard');
+      return;
+    }
+    
+    console.log('✅ PaymentPage: Authentication check passed');
+  }, [user, navigate, courseId]);
+
   // Load course details
   useEffect(() => {
     const loadCourse = async () => {
+      if (!user || (user.role !== 'student' && user.role !== 'instructor')) return; // Allow both students and instructors
+      
       try {
         setLoading(true);
         const result = await getCourseDetail(courseId);
@@ -39,6 +71,13 @@ const PaymentPage = () => {
           // Check if user is already enrolled
           if (result.enrolled) {
             alert('You are already enrolled in this course!');
+            navigate(`/course/${courseId}`);
+            return;
+          }
+
+          // Check if instructor is trying to enroll in their own course
+          if (user.role === 'instructor' && result.course.instructorId?.toString() === user._id?.toString()) {
+            alert('You cannot enroll in your own course!');
             navigate(`/course/${courseId}`);
             return;
           }
@@ -55,7 +94,7 @@ const PaymentPage = () => {
       }
     };
 
-    if (courseId) {
+    if (courseId && user && (user.role === 'student' || user.role === 'instructor')) {
       loadCourse();
     }
   }, [courseId, navigate, user]);
@@ -79,32 +118,40 @@ const PaymentPage = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.cardNumber.trim()) {
-      newErrors.cardNumber = 'Card number is required';
-    } else if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) {
-      newErrors.cardNumber = 'Please enter a valid 16-digit card number';
-    }
-    
-    if (!formData.expiryDate.trim()) {
-      newErrors.expiryDate = 'Expiry date is required';
-    } else if (!/^\d{2}\/\d{2}$/.test(formData.expiryDate)) {
-      newErrors.expiryDate = 'Please enter expiry date in MM/YY format';
-    }
-    
-    if (!formData.cvv.trim()) {
-      newErrors.cvv = 'CVV is required';
-    } else if (!/^\d{3,4}$/.test(formData.cvv)) {
-      newErrors.cvv = 'Please enter a valid CVV';
-    }
-    
-    if (!formData.cardholderName.trim()) {
-      newErrors.cardholderName = 'Cardholder name is required';
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    if (paymentMethod === 'temp') {
+      if (!tempCode.trim()) {
+        newErrors.tempCode = 'Temporary code is required';
+      } else if (tempCode !== 'TEST123') {
+        newErrors.tempCode = 'Invalid temporary code. Use TEST123 for testing.';
+      }
+    } else if (paymentMethod === 'card') {
+      if (!formData.cardNumber.trim()) {
+        newErrors.cardNumber = 'Card number is required';
+      } else if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) {
+        newErrors.cardNumber = 'Please enter a valid 16-digit card number';
+      }
+      
+      if (!formData.expiryDate.trim()) {
+        newErrors.expiryDate = 'Expiry date is required';
+      } else if (!/^\d{2}\/\d{2}$/.test(formData.expiryDate)) {
+        newErrors.expiryDate = 'Please enter expiry date in MM/YY format';
+      }
+      
+      if (!formData.cvv.trim()) {
+        newErrors.cvv = 'CVV is required';
+      } else if (!/^\d{3,4}$/.test(formData.cvv)) {
+        newErrors.cvv = 'Please enter a valid CVV';
+      }
+      
+      if (!formData.cardholderName.trim()) {
+        newErrors.cardholderName = 'Cardholder name is required';
+      }
+      
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
     }
     
     setErrors(newErrors);
@@ -184,8 +231,20 @@ const PaymentPage = () => {
     setPaymentStep('processing');
     
     try {
-      // Simulate payment processing
-      const paymentResult = await simulatePayment();
+      let paymentResult;
+      
+      if (paymentMethod === 'temp') {
+        // For temporary code, skip payment simulation
+        paymentResult = {
+          success: true,
+          transactionId: 'TEMP_' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+          amount: course.price,
+          currency: 'USD'
+        };
+      } else {
+        // Simulate payment processing for other methods
+        paymentResult = await simulatePayment();
+      }
       
       if (paymentResult.success) {
         // Enroll user in the course
@@ -212,6 +271,8 @@ const PaymentPage = () => {
 
   const getPaymentMethodIcon = (method) => {
     switch (method) {
+      case 'temp':
+        return '🔑';
       case 'card':
         return '💳';
       case 'paypal':
@@ -225,6 +286,8 @@ const PaymentPage = () => {
 
   const getPaymentMethodName = (method) => {
     switch (method) {
+      case 'temp':
+        return 'Temporary Code (Testing)';
       case 'card':
         return 'Credit/Debit Card';
       case 'paypal':
@@ -235,6 +298,34 @@ const PaymentPage = () => {
         return 'Credit/Debit Card';
     }
   };
+
+  if (!user) {
+    return (
+      <div className="payment-page">
+        <div className="payment-container">
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Redirecting to registration...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.role !== 'student' && user.role !== 'instructor') {
+    return (
+      <div className="payment-page">
+        <div className="payment-container">
+          <div className="error-message">
+            <p>Only students and instructors can enroll in courses.</p>
+            <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -270,6 +361,11 @@ const PaymentPage = () => {
         <div className="payment-header">
           <h1>Complete Your Enrollment</h1>
           <p>Secure payment powered by our payment partners</p>
+          {user.role === 'instructor' && (
+            <div className="instructor-notice">
+              <p>👨‍🏫 <strong>Instructor Mode:</strong> You can enroll in other instructors' courses for professional development.</p>
+            </div>
+          )}
         </div>
 
         <div className="payment-content">
@@ -294,7 +390,7 @@ const PaymentPage = () => {
               <div className="payment-methods">
                 <h3>Choose Payment Method</h3>
                 <div className="method-options">
-                  {['card', 'paypal', 'bank'].map(method => (
+                  {['temp', 'card', 'paypal', 'bank'].map(method => (
                     <button
                       key={method}
                       type="button"
@@ -307,6 +403,62 @@ const PaymentPage = () => {
                   ))}
                 </div>
               </div>
+
+              {paymentMethod === 'temp' && (
+                <div className="temp-code-section">
+                  <div className="temp-code-info">
+                    <h3>🔑 Temporary Enrollment Code</h3>
+                    <p>For testing purposes, use the temporary code to enroll without payment.</p>
+                    <div className="temp-code-note">
+                      <strong>Test Code:</strong> TEST123
+                    </div>
+                  </div>
+                  <form onSubmit={handlePayment} className="temp-code-form">
+                    <div className="form-group">
+                      <label htmlFor="tempCode">Temporary Code</label>
+                      <input
+                        type="text"
+                        id="tempCode"
+                        name="tempCode"
+                        value={tempCode}
+                        onChange={(e) => setTempCode(e.target.value)}
+                        placeholder="Enter TEST123"
+                        className={errors.tempCode ? 'error' : ''}
+                      />
+                      {errors.tempCode && <span className="error-message">{errors.tempCode}</span>}
+                    </div>
+
+                    <div className="payment-summary">
+                      <div className="summary-row">
+                        <span>Course Price:</span>
+                        <span>${course.price}</span>
+                      </div>
+                      <div className="summary-row total">
+                        <span>Total:</span>
+                        <span>${course.price}</span>
+                      </div>
+                    </div>
+
+                    <div className="form-actions">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/course/${courseId}`)}
+                        className="btn btn-secondary"
+                        disabled={paymentProcessing}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={paymentProcessing}
+                      >
+                        Enroll with Code
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
 
               {paymentMethod === 'card' && (
                 <form onSubmit={handlePayment} className="card-form">
@@ -457,16 +609,16 @@ const PaymentPage = () => {
               <div className="processing-animation">
                 <div className="spinner"></div>
               </div>
-              <h3>Processing Payment...</h3>
-              <p>Please wait while we process your payment securely.</p>
+              <h3>Processing {paymentMethod === 'temp' ? 'Enrollment' : 'Payment'}...</h3>
+              <p>Please wait while we {paymentMethod === 'temp' ? 'enroll you in the course' : 'process your payment securely'}.</p>
               <div className="processing-steps">
                 <div className="step active">
                   <span className="step-icon">🔒</span>
-                  <span>Securing payment</span>
+                  <span>{paymentMethod === 'temp' ? 'Validating code' : 'Securing payment'}</span>
                 </div>
                 <div className="step">
-                  <span className="step-icon">💳</span>
-                  <span>Processing card</span>
+                  <span className="step-icon">{paymentMethod === 'temp' ? '✅' : '💳'}</span>
+                  <span>{paymentMethod === 'temp' ? 'Processing enrollment' : 'Processing card'}</span>
                 </div>
                 <div className="step">
                   <span className="step-icon">✅</span>
@@ -481,7 +633,7 @@ const PaymentPage = () => {
               <div className="success-animation">
                 <div className="success-icon">✅</div>
               </div>
-              <h3>Payment Successful!</h3>
+              <h3>{paymentMethod === 'temp' ? 'Enrollment Successful!' : 'Payment Successful!'}</h3>
               <p>You have been successfully enrolled in the course.</p>
               <div className="success-details">
                 <div className="detail-row">
@@ -489,7 +641,7 @@ const PaymentPage = () => {
                   <span>{course.title}</span>
                 </div>
                 <div className="detail-row">
-                  <span>Amount Paid:</span>
+                  <span>Amount:</span>
                   <span>${course.price}</span>
                 </div>
                 <div className="detail-row">
@@ -519,8 +671,8 @@ const PaymentPage = () => {
               <div className="failed-animation">
                 <div className="failed-icon">❌</div>
               </div>
-              <h3>Payment Failed</h3>
-              <p>We couldn't process your payment. Please try again.</p>
+              <h3>{paymentMethod === 'temp' ? 'Enrollment Failed' : 'Payment Failed'}</h3>
+              <p>We couldn't {paymentMethod === 'temp' ? 'enroll you in the course' : 'process your payment'}. Please try again.</p>
               <div className="failed-actions">
                 <button
                   onClick={() => setPaymentStep('details')}

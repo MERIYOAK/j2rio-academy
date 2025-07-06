@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { getCourseDetail, enrollInCourse, postReview, getSecureThumbnailUrl } from '../utils/api';
+import { getCourseDetail, enrollInCourse, postReview, getPublicThumbnailUrl } from '../utils/api';
 import CoursePlayer from '../components/CoursePlayer';
 import './CourseDetail.css';
 
@@ -26,8 +26,13 @@ const CourseDetail = () => {
       setLoading(true);
       try {
         const res = await getCourseDetail(id);
-        setCourse(res.course);
-        setEnrolled(res.enrolled);
+        if (res.success) {
+          setCourse(res.course);
+          setEnrolled(res.enrolled);
+        } else {
+          console.error('Failed to fetch course:', res.error);
+          setError(res.error || 'Failed to load course details');
+        }
       } catch (error) {
         console.error('Failed to fetch course:', error);
         setError('Failed to load course details');
@@ -37,13 +42,13 @@ const CourseDetail = () => {
     fetchCourse();
   }, [id]);
 
-  // Load secure thumbnail URL
+  // Load public thumbnail URL
   useEffect(() => {
-    const loadSecureThumbnail = async () => {
+    const loadPublicThumbnail = async () => {
       if (course && course.thumbnail) {
         try {
-          console.log('🖼️ CourseDetail: Loading secure thumbnail for course:', course._id);
-          const result = await getSecureThumbnailUrl(course._id);
+          console.log('🖼️ CourseDetail: Loading public thumbnail for course:', course._id);
+          const result = await getPublicThumbnailUrl(course._id);
           if (result.success) {
             console.log('✅ CourseDetail: Thumbnail loaded successfully:', result.url);
             setSecureThumbnailUrl(result.url);
@@ -51,11 +56,11 @@ const CourseDetail = () => {
             console.warn('❌ CourseDetail: Failed to load thumbnail:', result.error);
           }
         } catch (error) {
-          console.error('❌ CourseDetail: Failed to load secure thumbnail:', error);
+          console.error('❌ CourseDetail: Failed to load public thumbnail:', error);
         }
       }
     };
-    loadSecureThumbnail();
+    loadPublicThumbnail();
   }, [course]);
 
   useEffect(() => {
@@ -77,8 +82,13 @@ const CourseDetail = () => {
 
   const handleEnroll = async () => {
     console.log('🎯 CourseDetail: Enroll button clicked');
+    console.log('🎯 CourseDetail: Current user:', user ? { id: user._id, role: user.role, name: user.name } : 'No user');
+    console.log('🎯 CourseDetail: Course ID:', id);
+    console.log('🎯 CourseDetail: Course instructor ID:', course?.instructorId);
+    
     if (!user) {
       console.log('👤 CourseDetail: No user, redirecting to register');
+      console.log('👤 CourseDetail: Will redirect back to:', `/course/${id}`);
       // Redirect to register with return URL
       navigate('/register', { 
         state: { 
@@ -89,14 +99,22 @@ const CourseDetail = () => {
       return;
     }
 
-    // Check if user is a student
-    if (user.role !== 'student') {
-      console.log('❌ CourseDetail: User is not a student, role:', user.role);
-      alert('Only students can enroll in courses. Please switch to a student account.');
+    // Check if user is a student or instructor
+    if (user.role !== 'student' && user.role !== 'instructor') {
+      console.log('❌ CourseDetail: User has invalid role for enrollment:', user.role);
+      alert('Only students and instructors can enroll in courses.');
       return;
     }
 
-    console.log('💳 CourseDetail: Redirecting to payment page');
+    // Check if instructor is trying to enroll in their own course
+    if (user.role === 'instructor' && course?.instructorId?.toString() === user._id?.toString()) {
+      console.log('❌ CourseDetail: Instructor trying to enroll in own course');
+      alert('You cannot enroll in your own course!');
+      return;
+    }
+
+    console.log('💳 CourseDetail: All checks passed, redirecting to payment page');
+    console.log('💳 CourseDetail: Payment URL:', `/course/${id}/payment`);
     // Redirect to payment page
     navigate(`/course/${id}/payment`);
   };
@@ -106,12 +124,20 @@ const CourseDetail = () => {
     setSubmitting(true);
     setError('');
     try {
-      await postReview(id, { rating, text: review });
-      setReview('');
-      setRating(5);
-      // Refresh course details to show new review
-      const res = await getCourseDetail(id);
-      setCourse(res.course);
+      const reviewResult = await postReview(id, { rating, text: review });
+      if (reviewResult.success) {
+        setReview('');
+        setRating(5);
+        // Refresh course details to show new review
+        const res = await getCourseDetail(id);
+        if (res.success) {
+          setCourse(res.course);
+        } else {
+          console.error('Failed to refresh course after review:', res.error);
+        }
+      } else {
+        setError(reviewResult.error || t('reviewSubmitError'));
+      }
     } catch (err) {
       setError(t('reviewSubmitError'));
     }
@@ -191,9 +217,15 @@ const CourseDetail = () => {
               </div>
               {error && <div className="alert alert-error">{error}</div>}
               <button 
-                className="btn btn-primary btn-large" 
+                className="btn btn-primary" 
                 onClick={handleEnroll}
                 disabled={submitting}
+                style={{ 
+                  fontSize: '1.1rem', 
+                  padding: '12px 24px',
+                  minWidth: '200px',
+                  cursor: submitting ? 'not-allowed' : 'pointer'
+                }}
               >
                 {submitting ? t('processing') : t('enrollNow')} - ${course.price}
               </button>

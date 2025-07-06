@@ -123,46 +123,74 @@ router.get('/', async (req, res) => {
     try {
         const { language, category, level, search, instructor, minPrice, maxPrice, sortBy, published, limit } = req.query;
         
-        console.log('📡 GET /courses request received with query params:', req.query);
+        console.log('📚 GET /courses request received:');
+        console.log('   Query parameters:', req.query);
+        console.log('   User agent:', req.get('User-Agent'));
+        console.log('   Request IP:', req.ip);
         
         const filter = { isPublished: true };
 
         // Handle published parameter (frontend sends 'published', backend uses 'isPublished')
         if (published !== undefined) {
             filter.isPublished = published === 'true' || published === true;
+            console.log('📋 Published filter applied:', filter.isPublished);
         }
 
-        if (language) filter.language = language;
-        if (category) filter.category = category;
-        if (level) filter.level = level;
+        if (language) {
+            filter.language = language;
+            console.log('🌍 Language filter:', language);
+        }
+        if (category) {
+            filter.category = category;
+            console.log('📂 Category filter:', category);
+        }
+        if (level) {
+            filter.level = level;
+            console.log('📊 Level filter:', level);
+        }
         if (instructor) {
-            // Frontend sends instructor name, so we need to find by instructor name
-            // We'll use a lookup to find courses by instructor name
-            console.log('👨‍🏫 Filtering by instructor name:', instructor);
+            console.log('👨‍🏫 Instructor filter:', instructor);
         }
         if (minPrice || maxPrice) {
             filter.price = {};
-            if (minPrice) filter.price.$gte = parseFloat(minPrice);
-            if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+            if (minPrice) {
+                filter.price.$gte = parseFloat(minPrice);
+                console.log('💰 Min price filter:', minPrice);
+            }
+            if (maxPrice) {
+                filter.price.$lte = parseFloat(maxPrice);
+                console.log('💰 Max price filter:', maxPrice);
+            }
         }
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } }
             ];
+            console.log('🔍 Search filter:', search);
         }
 
-        console.log('🔍 Applied filter:', filter);
+        console.log('🔍 Final filter applied:', JSON.stringify(filter, null, 2));
 
         let sortOptions = { createdAt: -1 };
-        if (sortBy === 'price') sortOptions = { price: 1 };
-        if (sortBy === 'rating') sortOptions = { rating: -1 };
-        if (sortBy === 'enrollmentCount') sortOptions = { enrollmentCount: -1 };
+        if (sortBy === 'price') {
+            sortOptions = { price: 1 };
+            console.log('📊 Sorting by price (ascending)');
+        }
+        if (sortBy === 'rating') {
+            sortOptions = { rating: -1 };
+            console.log('📊 Sorting by rating (descending)');
+        }
+        if (sortBy === 'enrollmentCount') {
+            sortOptions = { enrollmentCount: -1 };
+            console.log('📊 Sorting by enrollment count (descending)');
+        }
 
         // Build query with limit
         let query;
         
         if (instructor) {
+            console.log('🔍 Using aggregation pipeline for instructor filter');
             // Use aggregation to filter by instructor name
             const pipeline = [
                 { $match: filter },
@@ -185,10 +213,12 @@ router.get('/', async (req, res) => {
             
             if (limit) {
                 pipeline.push({ $limit: parseInt(limit) });
+                console.log('📏 Limit applied:', limit);
             }
             
             query = Course.aggregate(pipeline);
         } else {
+            console.log('🔍 Using regular query without instructor filter');
             // Regular query without instructor filter
             query = Course.find(filter)
                 .populate('instructor', 'name email')
@@ -196,6 +226,7 @@ router.get('/', async (req, res) => {
             
             if (limit) {
                 query = query.limit(parseInt(limit));
+                console.log('📏 Limit applied:', limit);
             }
         }
 
@@ -978,26 +1009,28 @@ router.get('/instructor/my-courses', verifyToken, requireInstructor, async (req,
     }
 });
 
-// Get student's enrolled courses
+// Get user's enrolled courses (works for both students and instructors)
 router.get('/student/enrolled', verifyToken, async (req, res) => {
     try {
+        console.log('📡 Fetching enrolled courses for user:', req.user._id, 'Role:', req.user.role);
+        
         const enrollments = await Enrollment.find({ userId: req.user._id })
             .populate({
                 path: 'courseId',
-                select: 'title description language price category level thumbnail videoUrl instructorId createdAt',
+                select: 'title description language price category level thumbnail videoUrl instructorId createdAt status isPublished',
                 populate: { path: 'instructor', select: 'name email' }
             })
             .sort({ enrolledAt: -1 });
 
-        console.log('Student enrollments found:', enrollments.length);
+        console.log('📥 Found', enrollments.length, 'enrollments for user');
         if (enrollments.length > 0) {
-            console.log('Sample enrollment course data:', enrollments[0].courseId);
-            console.log('Sample enrollment course instructorId:', enrollments[0].courseId.instructorId);
+            console.log('🔍 Sample enrollment course data:', enrollments[0].courseId);
+            console.log('🔍 Sample enrollment course instructorId:', enrollments[0].courseId.instructorId);
         }
 
         res.json({ courses: enrollments });
     } catch (error) {
-        console.error('Get enrolled courses error:', error);
+        console.error('❌ Get enrolled courses error:', error);
         res.status(500).json({ message: 'Error fetching enrolled courses' });
     }
 });
@@ -1029,10 +1062,10 @@ router.post('/:id/enroll', verifyToken, async (req, res) => {
             userRole: req.user.role
         });
 
-        // Check if user is a student
-        if (req.user.role !== 'student') {
+        // Check if user is a student or instructor
+        if (req.user.role !== 'student' && req.user.role !== 'instructor') {
             return res.status(403).json({ 
-                message: 'Only students can enroll in courses' 
+                message: 'Only students and instructors can enroll in courses' 
             });
         }
 
@@ -1043,6 +1076,13 @@ router.post('/:id/enroll', verifyToken, async (req, res) => {
         const course = await Course.findById(courseId);
         if (!course) {
             return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Check if instructor is trying to enroll in their own course
+        if (req.user.role === 'instructor' && course.instructorId.toString() === userId.toString()) {
+            return res.status(400).json({ 
+                message: 'You cannot enroll in your own course' 
+            });
         }
 
         // Check course status
@@ -1090,7 +1130,8 @@ router.post('/:id/enroll', verifyToken, async (req, res) => {
         console.log('✅ Enrollment successful:', {
             courseId: courseId,
             userId: userId,
-            enrollmentId: enrollment._id
+            enrollmentId: enrollment._id,
+            userRole: req.user.role
         });
 
         res.json({
