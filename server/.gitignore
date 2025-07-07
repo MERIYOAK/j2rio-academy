@@ -73,7 +73,6 @@ Thumbs.db
 
 # Uploads and media files
 /uploads/
-/public/uploads/
 /media/
 
 # Database files
